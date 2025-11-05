@@ -3,7 +3,7 @@ name: Run Code Quality Checks
 # Workflow runs on pull requests
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main]
   # Also allow manual trigger for testing
   workflow_dispatch:
 
