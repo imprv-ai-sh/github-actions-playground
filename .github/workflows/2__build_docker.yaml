@@ -51,5 +51,3 @@ jobs:
           file: Dockerfile
           tags: |
             registry.digitalocean.com/masterclass-registry/test-image:${{ env.DOCKER_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
