@@ -9,3 +9,4 @@ https://github.com/imprv-ai-sh/github-actions-playground
 4. Przykład uruchamiania budowania na on workflow dispatch z inputem
 5. Podłączenie zewnętrznych serwisów ( na przykładzie Coderabbit )
 6. Przykład skomplikowanego workflow examples/.github/workflows/build_and_notify.yaml
+7. Github actions marketplace - nie wszystko musimy pisać sami

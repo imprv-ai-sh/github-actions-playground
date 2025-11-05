@@ -4,6 +4,7 @@ name: Build Docker image and push to registry
 on:
   pull_request:
     branches: [ main ]
+    types: [ closed ]
   # Also allow manual trigger for testing
   workflow_dispatch:
 
