@@ -9,20 +9,15 @@ on:
         required: true
         default: 'latest'
       environment:
-        description: 'Target environment'
+        description: 'Target environment (development, production)'
         required: true
         default: 'development'
-        type: choice
-        options:
-          - development
-          - production
-          - both
 
 jobs:
   # First job: Deploy to Development Environment
   deploy-development:
     runs-on: ubuntu-latest
-    if: inputs.environment == 'development' || inputs.environment == 'both'
+    if: inputs.environment == 'development'
     environment: 
       name: development
       url: https://dev.masterclass-app.com
@@ -73,8 +68,8 @@ jobs:
     needs: deploy-development
     if: |
       always() && 
-      (inputs.environment == 'production' || inputs.environment == 'both') &&
-      (needs.deploy-development.result == 'success' || inputs.environment == 'production')
+      inputs.environment == 'production' &&
+      needs.deploy-development.result == 'success'
     environment:
       name: production
       url: https://masterclass-app.com
@@ -82,14 +77,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Download development deployment report
-        if: inputs.environment == 'both'
-        uses: actions/download-artifact@v4
-        with:
-          name: dev-deployment-report-${{ inputs.docker_tag }}
-        continue-on-error: true
-      
+       
       - name: Pre-production validation
         run: |
           echo "🔒 Running production readiness checks..."
