@@ -1,3 +1,6 @@
+# Repo
+https://github.com/imprv-ai-sh/github-actions-playground
+
 # Agenda
 
 1. Podstawowa struktura 
