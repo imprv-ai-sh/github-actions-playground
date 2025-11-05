@@ -65,19 +65,7 @@ jobs:
           sleep 5
           
           echo "✅ Application deployed successfully to development!"
-          echo "🌐 Available at: https://dev.masterclass-app.com"
-      
-      
-      - name: Generate deployment report
-        run: |
-          echo "📊 Development Deployment Summary" >> deployment_report.md
-          echo "=================================" >> deployment_report.md
-          echo "Docker Tag: ${{ inputs.docker_tag }}" >> deployment_report.md
-          echo "Environment: development" >> deployment_report.md
-          echo "Deployment Time: $(date)" >> deployment_report.md
-          echo "Status: ✅ SUCCESS" >> deployment_report.md
-          echo "URL: https://dev.masterclass-app.com" >> deployment_report.md
-      
+          echo "🌐 Available at: https://dev.masterclass-app.com" 
 
   # Second job: Deploy to Production Environment (requires manual approval)
   deploy-production:
