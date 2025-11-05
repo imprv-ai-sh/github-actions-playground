@@ -39,7 +39,7 @@ jobs:
             poetry-${{ runner.os }}-
       
       - name: Install dependencies
-        run: poetry install --with dev
+        run: poetry install --no-root --with dev
       
       - name: Run mypy type checking
         run: poetry run mypy masterclass/ --ignore-missing-imports
