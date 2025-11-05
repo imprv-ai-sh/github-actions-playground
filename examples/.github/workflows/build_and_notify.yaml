@@ -1,0 +1,132 @@
+name: Bump Version and Build API
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+# Add permissions block at the top level
+permissions:
+  contents: write  # This grants write access to repository contents
+
+jobs:
+  deploy:
+    name: Bump Version and Build
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.7'
+
+      - name: Install Sentry CLI
+        run: curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.37.0" sh
+
+      - name: Log in to Sentry
+        run: sentry-cli login --auth-token ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Install Pypyr
+        run: pip install pypyr
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Update lock file
+        run: poetry lock
+
+      - name: Bump poetry version
+        run: poetry version patch
+
+      - name: Install poetry export
+        run: poetry self add poetry-plugin-export
+
+      - name: Log in to DO Container Registry
+        run: |
+          doctl registry login --expiry-seconds 1200
+
+      - name: Setup Docker Buildx
+        uses: useblacksmith/setup-docker-builder@v1
+
+      - name: Export requirements.txt and set version info
+        run: |
+          set -e  # Exit immediately if a command exits with a non-zero status
+          # Export requirements.txt
+          poetry export --format=requirements.txt --without=dev > requirements.txt
+
+          # Export the version and docker tag to GITHUB_ENV to make them available to other steps
+          VERSION=$(poetry version --short)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          DOCKER_TAG="$VERSION-$COMMIT_HASH"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: .
+          file: api.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            registry.digitalocean.com/REGISTRY_NAME/IMAGE_NAME:${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Configure Git
+        if: success()  # Only run if previous steps succeeded
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Extract ClickUp Task ID
+        id: extract-task-id
+        run: |
+          if [[ "${{ github.event.pull_request }}" != "" ]]; then
+            BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          else
+            BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}")
+          fi
+          
+          if [[ "$BRANCH_NAME" =~ IMPRV-CU-([a-zA-Z0-9]+) ]]; then
+            echo "TASK_ID=${BASH_REMATCH[1]}" >> $GITHUB_ENV
+            echo "CLICKUP_URL=https://app.clickup.com/t/${BASH_REMATCH[1]}" >> $GITHUB_ENV
+          fi
+
+      - name: Commit and push changes
+        if: success()  # Only run if previous steps succeeded
+        run: |
+          git add .
+          git commit -m "ci: bump version and build" || echo "No changes to commit"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ${GITHUB_REF_NAME}
+
+      - name: Create and push Git tag
+        if: success()  # Only run if previous steps succeeded
+        run: |
+          git tag -a "v${VERSION}" -m "Version ${VERSION} - Docker tag: ${DOCKER_TAG}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" --tags
+
+      - name: Send Slack Notification
+        if: success()  # Only run if previous steps succeeded
+        continue-on-error: true  # Don't fail the job if Slack notification fails
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ secrets.SLACK_CHANNEL_ID }}
+            text: |
+              🏗️ Version Bumped for API
+              ${{ github.event.pull_request && format('Merged branch: {0}', github.event.pull_request.head.ref) || '' }}
+              ${{ env.DOCKER_TAG && format('Pushed new docker image with tag: {0}', env.DOCKER_TAG) || '' }}
+              ${{ env.CLICKUP_URL && format('For ClickUp Task: {0}', env.CLICKUP_URL) || '' }}
