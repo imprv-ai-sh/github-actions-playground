@@ -1,0 +1,25 @@
+name: Hello World Basic Action
+
+# Kiedy działa workflow?
+on:
+  push:    # Przy wypchnięciu kodu
+  pull_request:  # Przy tworzeniu pull request
+  workflow_dispatch:  # Przy ręcznym uruchomieniu workflow
+
+# Co działa workflow?
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest  # Używamy Ubuntu jako naszej maszyny wirtualnej
+    
+    steps:
+      - name: Say Hello
+        run: echo "Hello, World! This is my first GitHub Action! 🚀"
+      
+      - name: Show current date and time
+        run: date
+      
+      - name: Show basic system info
+        run: |
+          echo "Runner OS: $RUNNER_OS"
+          echo "GitHub repository: $GITHUB_REPOSITORY"
+          echo "Event that triggered this: $GITHUB_EVENT_NAME"
