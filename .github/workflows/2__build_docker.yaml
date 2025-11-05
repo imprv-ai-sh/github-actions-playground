@@ -1,4 +1,4 @@
-name: Run Code Quality Checks
+name: Build Docker image and push to registry
 
 # Workflow runs on pull requests
 on:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  code-quality:
+  build-docker:
     runs-on: ubuntu-latest
     
     steps:
@@ -51,3 +51,6 @@ jobs:
           file: Dockerfile
           tags: |
             registry.digitalocean.com/masterclass-registry/test-image:${{ env.DOCKER_TAG }}
+
+      - name: Push Docker image
+        run: echo "I tutaj bedzie push do registry który już znacie dla tagu ${{ env.DOCKER_TAG }}"
