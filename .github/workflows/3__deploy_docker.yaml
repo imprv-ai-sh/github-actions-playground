@@ -62,14 +62,10 @@ jobs:
           echo "✅ Application deployed successfully to development!"
           echo "🌐 Available at: https://dev.masterclass-app.com" 
 
-  # Second job: Deploy to Production Environment (requires manual approval)
+  # Second job: Deploy to Production Environment
   deploy-production:
     runs-on: ubuntu-latest
-    needs: deploy-development
-    if: |
-      always() && 
-      inputs.environment == 'production' &&
-      needs.deploy-development.result == 'success'
+    if: inputs.environment == 'production'
     environment:
       name: production
       url: https://masterclass-app.com
