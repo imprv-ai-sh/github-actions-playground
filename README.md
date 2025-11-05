@@ -10,3 +10,4 @@ https://github.com/imprv-ai-sh/github-actions-playground
 5. Podłączenie zewnętrznych serwisów ( na przykładzie Coderabbit )
 6. Przykład skomplikowanego workflow examples/.github/workflows/build_and_notify.yaml
 7. Github actions marketplace - nie wszystko musimy pisać sami
+live
